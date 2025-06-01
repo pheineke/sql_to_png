@@ -1,6 +1,12 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
+# Install fontconfig and common fonts first to ensure they are available
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fontconfig \
+    fonts-dejavu-core \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory in the container
 WORKDIR /app
 

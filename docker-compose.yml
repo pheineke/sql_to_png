@@ -3,7 +3,7 @@ services:
   web:
     build: .
     ports:
-      - "80:5000" # Map host port 80 to container port 5000 for standard HTTP
+      - "5001:5000" # Map host port 5001 to container port 5000
     environment:
       - FLASK_ENV=production # Set to production
     restart: unless-stopped # Ensure the service restarts if it stops unexpectedly
