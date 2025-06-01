@@ -194,6 +194,13 @@
         async function copyImageToClipboard() {
             const imageElement = document.getElementById('generatedImage');
             const tooltip = document.querySelector('.copy-button .tooltip');
+
+            if (!navigator.clipboard) {
+                alert('Clipboard API not available. This feature usually requires a secure connection (HTTPS) or your browser might not support it. Please try right-clicking and saving the image.');
+                console.error('Clipboard API not available.');
+                return;
+            }
+
             try {
                 // Fetch the image data as a blob
                 const response = await fetch(imageElement.src);
@@ -211,10 +218,12 @@
             } catch (err) {
                 console.error('Failed to copy image: ', err);
                 // Fallback for browsers that might not support ClipboardItem or for other errors
+                // This fallback might also fail if navigator.clipboard itself was the issue, 
+                // but the check above should catch that.
                 try {
                     const dataUrl = imageElement.src;
                     await navigator.clipboard.writeText(dataUrl);
-                    alert('Image Data URL copied to clipboard! You can paste this into some apps or save it.');
+                    alert('Image Data URL copied to clipboard as text! This is a fallback method.');
                 } catch (fallbackErr) {
                     console.error('Fallback copy failed: ', fallbackErr);
                     alert('Failed to copy image. Please try right-clicking and saving the image.');
