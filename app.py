@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template
 from pygments import highlight
 from pygments.lexers import SqlLexer, PythonLexer, JavaLexer, CLexer # Added more lexers
+from pygments.lexers.special import TextLexer # Added TextLexer
 from pygments.formatters import ImageFormatter
 from pygments.styles import get_style_by_name # To get styles dynamically
 from PIL import Image, ImageDraw, ImageFont
@@ -15,6 +16,7 @@ LEXERS = {
     'python': PythonLexer,
     'java': JavaLexer,
     'c': CLexer,
+    'text': TextLexer, # Added TextLexer
 }
 
 @app.route('/', methods=['GET', 'POST'])
@@ -25,19 +27,22 @@ def index():
         'sql': "SELECT * FROM users WHERE id = 1;",
         'python': "def hello_world():\n    print(\"Hello, World!\")",
         'java': "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}",
-        'c': "#include <stdio.h>\n\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}"
+        'c': "#include <stdio.h>\n\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}",
+        'text': "This is some plain text.\nIt will be rendered as an image.", # Added default for text
     }
     selected_language = 'sql' # Default language
     selected_theme = 'light' # Default theme
+    image_title = ''  # Default title
     code_input = default_code[selected_language]
 
     if request.method == 'POST':
+        image_title = request.form.get('title', '')
         code_input = request.form['sql_code']
         selected_language = request.form.get('language', 'sql')
         selected_theme = 'dark' if request.form.get('theme') == 'dark' else 'light'
 
         try:
-            LexerClass = LEXERS.get(selected_language, SqlLexer) # Default to SqlLexer if language not found
+            LexerClass = LEXERS.get(selected_language, TextLexer) # Changed default to TextLexer for safety
             
             # Choose style based on theme
             style_name = 'monokai' if selected_theme == 'dark' else 'default'
@@ -103,16 +108,30 @@ def index():
 
             framed_img.paste(img, (border_width, title_bar_height + border_width))
 
+            # Draw the title text next to the buttons
+            title_text_color = (255, 255, 255) if selected_theme == 'dark' else (0, 0, 0)
+            # Load a larger TTF font for the title; fallback to default if unavailable
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+            except IOError:
+                font = ImageFont.load_default()
+            # Calculate text position for vertical centering in title bar
+            text_width, text_height = font.getsize(image_title)
+            text_x = border_width + 10 + 3 * (button_radius * 2 + 10)
+            text_y = border_width + (title_bar_height - text_height) // 2
+            draw.text((text_x, text_y), image_title, fill=title_text_color, font=font)
+
             byte_arr = io.BytesIO()
             framed_img.save(byte_arr, format='PNG')
             byte_arr.seek(0)
             
             image_data = base64.b64encode(byte_arr.getvalue()).decode('utf-8')
 
-            return render_template('index.html', sql_code=code_input, image_data=image_data, selected_language=selected_language, selected_theme=selected_theme)
+            return render_template('index.html', sql_code=code_input, image_data=image_data, selected_language=selected_language, selected_theme=selected_theme, image_title=image_title)
         except Exception as e:
-            return render_template('index.html', error=str(e), sql_code=code_input, selected_language=selected_language, selected_theme=selected_theme)
+            return render_template('index.html', error=str(e), sql_code=code_input, selected_language=selected_language, selected_theme=selected_theme, image_title=image_title)
     else: # GET request
+        image_title = request.args.get('title', '')
         # Update code_input based on selected_language if it's a GET request and language is in query params (e.g. user changed lang)
         requested_language = request.args.get('language', selected_language)
         if requested_language in default_code:
@@ -125,7 +144,7 @@ def index():
              selected_theme = 'light'
 
             
-    return render_template('index.html', sql_code=code_input, image_data=image_data, selected_language=selected_language, selected_theme=selected_theme)
+    return render_template('index.html', sql_code=code_input, image_data=image_data, selected_language=selected_language, selected_theme=selected_theme, image_title=image_title)
 
 if __name__ == '__main__':
     app.run(debug=True) # Commented out for production

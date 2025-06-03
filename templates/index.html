@@ -133,6 +133,9 @@
             display: flex;
             align-items: center;
         }
+        .form-field {
+            margin-bottom: 10px;
+        }
 
         /* Responsive adjustments */
         @media (max-width: 600px) {
@@ -154,6 +157,10 @@
     <div class="container">
         <h1>SQL Code to PNG Image</h1>
         <form method="POST">
+            <div class="form-field">
+                <label for="title">Title:</label>
+                <input type="text" name="title" id="title" value="{{ image_title if image_title else '' }}" placeholder="Enter image title" style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;" />
+            </div>
             <div class="form-options">
                 <div>
                     <label for="language">Language:</label>
@@ -162,6 +169,7 @@
                         <option value="python" {% if selected_language == 'python' %}selected{% endif %}>Python</option>
                         <option value="java" {% if selected_language == 'java' %}selected{% endif %}>Java</option>
                         <option value="c" {% if selected_language == 'c' %}selected{% endif %}>C</option>
+                        <option value="text" {% if selected_language == 'text' %}selected{% endif %}>Plain Text</option> {# Added Plain Text option #}
                     </select>
                 </div>
                 <div class="theme-toggle">
